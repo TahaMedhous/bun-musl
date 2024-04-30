@@ -31,11 +31,22 @@ fi
 
 tmpdir=$(mktemp -d)
 
+get_latest_archive_url() {
+    curl -s "https://repo-default.voidlinux.org/live/current/" | grep -oE 'void-x86_64-ROOTFS-[0-9]+\.tar\.xz' | tail -n 1
+}
+
 prepatch() {
-    echo "Downloading void linux glibc rootfs"
-    cd $tmpdir
-    curl https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz --output void.tar.xz
-    echo "Downloaded void linux glibc rootfs"
+   latest_archive_url=$(get_latest_archive_url)
+    if [ -z "$latest_archive_url" ]; then
+        echo "Failed to retrieve the latest archive URL."
+        exit 1
+    fi
+
+    echo "Latest archive URL: $latest_archive_url"
+
+    cd "$tmpdir" || exit 1
+    curl "https://repo-default.voidlinux.org/live/current/$latest_archive_url" --output void.tar.xz
+    echo "Downloaded Void Linux glibc rootfs"
 
     echo "Extracting libraries from the archive"
     tar -xf void.tar.xz ./usr/lib/libdl.so.2 ./usr/lib/libm.so.6 ./usr/lib/libpthread.so.0 ./usr/lib/libc.so.6 ./usr/lib/ld-linux-x86-64.so.2
